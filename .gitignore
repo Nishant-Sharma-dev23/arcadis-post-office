@@ -480,3 +480,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Personal notes and local tooling (not part of the submission)
+PLAN.md
+CLAUDE.md
+.claude/
