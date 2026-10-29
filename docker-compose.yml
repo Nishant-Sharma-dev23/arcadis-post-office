@@ -1,3 +1,7 @@
+# Runs the whole app with one command: docker compose up --build
+#   web  http://localhost:3000          React app (nginx)
+#   api  http://localhost:8080/swagger  ASP.NET Core API
+#   db   localhost:5432                 PostgreSQL
 services:
   db:
     image: postgres:17
@@ -9,6 +13,36 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postal -d postal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: src/Postal.Api/Dockerfile
+    environment:
+      # Development: applies migrations, seeds demo data and enables Swagger
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Postal: Host=db;Port=5432;Database=postal;Username=postal;Password=postal
+      FrontendOrigin: http://localhost:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
 
 volumes:
   pgdata:
